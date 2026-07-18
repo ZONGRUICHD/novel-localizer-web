@@ -18,6 +18,10 @@
 5. 创建独立 Tunnel `shiori-origin`，唯一 public hostname 为 `translate-origin.zongtech.xyz → http://127.0.0.1:18740`。不要复用现有 Tunnel 路由。
 6. 创建私有 R2 bucket `shiori-restic-backup` 和仅对该 bucket 有权的 S3 API token。
 
+### GitHub 保护门槛
+
+运行 `scripts/configure-github.ps1` 后必须核验 `main` 的状态检查、线性历史和强制管理员保护均已生效。若当前 GitHub 计划不支持私有仓库分支保护，脚本会失败退出；保持仓库私有，不要以改为公开或跳过保护来绕过此门槛。先升级到支持该能力的计划，再启用生产发布 Environment。
+
 ## 2. 主机
 
 预检通过后，可以审阅并运行范围受限的 bootstrap。它只创建 Shiori 用户、目录、单元与发布入口，不启动服务，也不修改 SSH、UFW、DNS、11435 或既有 Tunnel：

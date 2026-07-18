@@ -5,12 +5,43 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+
+function Assert-GitHubCliSuccess {
+    param([string]$Operation)
+    if ($LASTEXITCODE -ne 0) {
+        throw "GitHub CLI failed while $Operation (exit code $LASTEXITCODE)."
+    }
+}
+
+function Invoke-GitHubJsonRequest {
+    param(
+        [string]$Payload,
+        [string]$Operation,
+        [string[]]$Arguments
+    )
+
+    $inputFile = [System.IO.Path]::GetTempFileName()
+    try {
+        [System.IO.File]::WriteAllText(
+            $inputFile,
+            $Payload,
+            [System.Text.UTF8Encoding]::new($false)
+        )
+        & gh api @Arguments --input $inputFile | Out-Null
+        Assert-GitHubCliSuccess $Operation
+    }
+    finally {
+        [System.IO.File]::Delete($inputFile)
+    }
+}
 
 if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
     throw "GitHub CLI (gh) is required."
 }
 
 gh auth status | Out-Null
+Assert-GitHubCliSuccess "checking GitHub authentication"
 
 $checks = @(
     "Repository policy",
@@ -26,7 +57,6 @@ if ($IncludeCloudflarePagesCheck) {
 }
 
 $repoSettings = @{
-    private                   = $true
     has_issues                = $true
     has_projects              = $false
     has_wiki                  = $false
@@ -34,9 +64,7 @@ $repoSettings = @{
     allow_merge_commit        = $false
     allow_rebase_merge        = $false
     allow_squash_merge        = $true
-    allow_auto_merge          = $true
     allow_update_branch       = $true
-    use_squash_pr_title_as_default = $true
 } | ConvertTo-Json -Depth 5
 
 $branchProtection = @{
@@ -60,14 +88,29 @@ $branchProtection = @{
 } | ConvertTo-Json -Depth 8
 
 if ($PSCmdlet.ShouldProcess($Repository, "configure private repository settings")) {
-    $repoSettings | gh api --method PATCH "repos/$Repository" --input - | Out-Null
+    Invoke-GitHubJsonRequest $repoSettings "configuring repository settings" @(
+        "--method", "PATCH", "repos/$Repository"
+    )
+    $isPrivate = gh api "repos/$Repository" --jq .private
+    Assert-GitHubCliSuccess "checking repository visibility"
+    if ($isPrivate -ne "true") {
+        throw "Refusing to configure a repository that is not private."
+    }
 }
 
 if ($PSCmdlet.ShouldProcess("$Repository main", "enable branch protection")) {
-    $branchProtection | gh api --method PUT "repos/$Repository/branches/main/protection" --input - | Out-Null
+    Invoke-GitHubJsonRequest $branchProtection "enabling branch protection" @(
+        "--method", "PUT", "repos/$Repository/branches/main/protection"
+    )
+}
+
+if ($WhatIfPreference) {
+    Write-Output "GitHub repository policy dry run completed for $Repository"
+    return
 }
 
 $ownerId = gh api users/ZONGRUICHD --jq .id
+Assert-GitHubCliSuccess "reading owner identity"
 $environment = @{
     wait_timer                    = 0
     prevent_self_review           = $false
@@ -79,7 +122,9 @@ $environment = @{
 } | ConvertTo-Json -Depth 6
 
 if ($PSCmdlet.ShouldProcess("$Repository production-server", "configure protected deployment environment")) {
-    $environment | gh api --method PUT "repos/$Repository/environments/production-server" --input - | Out-Null
+    Invoke-GitHubJsonRequest $environment "configuring the production deployment environment" @(
+        "--method", "PUT", "repos/$Repository/environments/production-server"
+    )
 }
 
 Write-Output "GitHub repository policy configured for $Repository"

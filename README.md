@@ -92,7 +92,8 @@ pnpm exec wrangler pages functions build
 2. 运行只读预检；若 `127.0.0.1:18740` 已占用或可用磁盘少于 10 GiB，停止部署。
 3. 在 Cloudflare 中完成两个 IdP 的实际邮箱返回测试，精确放行 `zongrui0831@outlook.com`，要求 MFA、8 小时会话。
 4. 同时保护自定义域、生产 `pages.dev` 与所有 Preview；Preview 不设置生产源站 Service Token。
-5. 提供至少一卷与现有中文译本对应、无 DRM 的日文原版，并逐资料库确认私人处理和外部短片段权限。
-6. 创建 systemd encrypted credential、独立 Tunnel 和私有 R2 restic bucket 后，才运行后端发布工作流。
+5. 私有仓库的 `main` 分支必须实际启用 CI/CodeQL/Pages Preview 状态检查与管理员保护；若 GitHub 计划不支持此能力，先升级计划，不降低仓库私有性或跳过保护。
+6. 提供至少一卷与现有中文译本对应、无 DRM 的日文原版，并逐资料库确认私人处理和外部短片段权限。
+7. 创建 systemd encrypted credential、独立 Tunnel 和私有 R2 restic bucket 后，才运行后端发布工作流。
 
 代码按私有专有项目管理。未经所有者书面许可，不得复制、分发或公开部署。
