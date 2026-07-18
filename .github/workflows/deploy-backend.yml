@@ -1,0 +1,85 @@
+name: Deploy backend
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Tested git ref to deploy
+        required: true
+        default: main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: shiori-production-backend
+  cancel-in-progress: false
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.revision.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - id: revision
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras --locked
+        working-directory: backend
+      - run: uv run pytest
+        working-directory: backend
+        env:
+          SHIORI_ENV: test
+      - run: uv build --wheel --out-dir ../release
+        working-directory: backend
+      - run: tar --exclude=.git --exclude=frontend --exclude='*.epub' --exclude='*.pdf' -czf release/shiori-source.tar.gz backend deploy
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shiori-backend-${{ steps.revision.outputs.sha }}
+          path: release/
+          if-no-files-found: error
+          retention-days: 7
+
+  deploy:
+    needs: build-and-verify
+    runs-on: ubuntu-latest
+    environment:
+      name: production-server
+      url: https://translate.zongtech.xyz
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: shiori-backend-${{ needs.build-and-verify.outputs.sha }}
+          path: release
+      - name: Configure pinned SSH identity
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SHIORI_SSH_PRIVATE_KEY }}
+          SSH_HOST_KEY: ${{ secrets.SHIORI_SSH_HOST_KEY }}
+        run: |
+          install -d -m 0700 ~/.ssh
+          install -m 0600 /dev/null ~/.ssh/id_shiori
+          printf '%s' "$SSH_PRIVATE_KEY" > ~/.ssh/id_shiori
+          printf '%s\n' "$SSH_HOST_KEY" > ~/.ssh/known_hosts
+      - name: Upload immutable release artifacts
+        env:
+          SSH_HOST: ${{ secrets.SHIORI_SSH_HOST }}
+          SSH_PORT: ${{ secrets.SHIORI_SSH_PORT }}
+          SSH_USER: ${{ secrets.SHIORI_SSH_USER }}
+          RELEASE_SHA: ${{ needs.build-and-verify.outputs.sha }}
+        run: |
+          WHEEL=$(find release -maxdepth 1 -type f -name '*.whl' -print -quit)
+          test -n "$WHEEL"
+          ssh -i ~/.ssh/id_shiori -p "$SSH_PORT" -o BatchMode=yes "$SSH_USER@$SSH_HOST" \
+            "install -d -m 0700 /var/tmp/shiori-deploy/$RELEASE_SHA"
+          scp -i ~/.ssh/id_shiori -P "$SSH_PORT" -o BatchMode=yes release/shiori-source.tar.gz "$WHEEL" "$SSH_USER@$SSH_HOST:/var/tmp/shiori-deploy/$RELEASE_SHA/"
+          ssh -i ~/.ssh/id_shiori -p "$SSH_PORT" -o BatchMode=yes "$SSH_USER@$SSH_HOST" \
+            "sudo /usr/local/sbin/shiori-install-release '$RELEASE_SHA'"
+      - name: Verify protected public endpoint
+        run: |
+          status=$(curl -sS -o /dev/null -w '%{http_code}' https://translate.zongtech.xyz/)
+          test "$status" = 200 || test "$status" = 302

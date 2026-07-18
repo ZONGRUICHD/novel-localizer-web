@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+.venv/
+backend/.venv/
+backend/*.db
+backend/*.sqlite*
+
+# Node / Vite / Wrangler
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/coverage/
+.wrangler/
+frontend/.wrangler/
+frontend/_worker.bundle
+*.tsbuildinfo
+
+# Local runtime data and secrets
+.env
+.env.*
+!.env.example
+.dev.vars
+*.key
+*.pem
+*.cred
+credentials/
+data/
+uploads/
+artifacts/
+tmp/
+output/
+
+# Private books and generated corpora must never enter Git
+*.epub
+*.pdf
+*.mobi
+*.azw*
+*.restic
+corpus/
+private-fixtures/
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

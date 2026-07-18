@@ -1,0 +1,34 @@
+[Unit]
+Description=Cloudflare Tunnel for Shiori origin
+After=network-online.target shiori-api.service
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=cloudflared
+Group=cloudflared
+LoadCredentialEncrypted=tunnel-token:/etc/shiori/credentials/tunnel-token.cred
+ExecStart=/usr/bin/cloudflared tunnel --no-autoupdate run --token-file %d/tunnel-token
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+UMask=0077
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+MemoryMax=256M
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target

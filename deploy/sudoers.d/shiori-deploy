@@ -1,0 +1,5 @@
+# Install this as root:root, mode 0440. The shiori-deploy account must have no
+# interactive shell access beyond its SSH deploy key. The installer accepts one
+# hexadecimal revision and only reads the fixed staging directory.
+Cmnd_Alias SHIORI_RELEASE = /usr/local/sbin/shiori-install-release [0-9a-f]*
+shiori-deploy ALL=(root) NOPASSWD: SHIORI_RELEASE

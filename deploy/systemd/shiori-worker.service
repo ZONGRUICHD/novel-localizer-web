@@ -1,0 +1,46 @@
+[Unit]
+Description=Shiori persistent translation worker
+After=network-online.target shiori-api.service
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=shiori
+Group=shiori
+WorkingDirectory=/opt/shiori/current/backend
+EnvironmentFile=-/etc/shiori/shiori.env
+LoadCredentialEncrypted=shiori-master-key:/etc/shiori/credentials/shiori-master-key.cred
+LoadCredentialEncrypted=shiori-csrf-secret:/etc/shiori/credentials/shiori-csrf-secret.cred
+Environment=SHIORI_MASTER_KEY_FILE=%d/shiori-master-key
+Environment=SHIORI_CSRF_SECRET_FILE=%d/shiori-csrf-secret
+ExecStart=/opt/shiori/current/venv/bin/python -m shiori.worker
+Restart=always
+RestartSec=5s
+TimeoutStopSec=90s
+UMask=0077
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/var/lib/shiori
+StateDirectory=shiori
+StateDirectoryMode=0700
+LimitNOFILE=4096
+TasksMax=128
+MemoryMax=2048M
+CPUQuota=200%
+
+[Install]
+WantedBy=multi-user.target

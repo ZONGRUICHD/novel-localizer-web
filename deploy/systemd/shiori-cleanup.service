@@ -1,0 +1,17 @@
+[Unit]
+Description=Clean expired Shiori temporary data
+
+[Service]
+Type=oneshot
+User=shiori
+Group=shiori
+ExecStart=/opt/shiori/current/deploy/scripts/cleanup.sh
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/shiori/tmp /var/lib/shiori/uploads
+CapabilityBoundingSet=
+AmbientCapabilities=

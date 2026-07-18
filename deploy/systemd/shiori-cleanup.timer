@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Shiori temporary-data cleanup
+
+[Timer]
+OnCalendar=*-*-* 04:10:00
+RandomizedDelaySec=20m
+Persistent=true
+Unit=shiori-cleanup.service
+
+[Install]
+WantedBy=timers.target

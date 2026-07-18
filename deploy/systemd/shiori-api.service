@@ -1,0 +1,48 @@
+[Unit]
+Description=Shiori private book localization API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=shiori
+Group=shiori
+WorkingDirectory=/opt/shiori/current/backend
+EnvironmentFile=-/etc/shiori/shiori.env
+LoadCredentialEncrypted=shiori-master-key:/etc/shiori/credentials/shiori-master-key.cred
+LoadCredentialEncrypted=shiori-csrf-secret:/etc/shiori/credentials/shiori-csrf-secret.cred
+Environment=SHIORI_MASTER_KEY_FILE=%d/shiori-master-key
+Environment=SHIORI_CSRF_SECRET_FILE=%d/shiori-csrf-secret
+ExecStartPre=/opt/shiori/current/venv/bin/alembic upgrade head
+ExecStart=/opt/shiori/current/venv/bin/uvicorn shiori.main:app --host 127.0.0.1 --port 18740 --proxy-headers --forwarded-allow-ips=127.0.0.1
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=45s
+UMask=0077
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+ReadWritePaths=/var/lib/shiori
+StateDirectory=shiori
+StateDirectoryMode=0700
+LimitNOFILE=4096
+TasksMax=128
+MemoryMax=1536M
+CPUQuota=200%
+
+[Install]
+WantedBy=multi-user.target

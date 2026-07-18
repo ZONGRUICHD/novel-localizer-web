@@ -1,0 +1,13 @@
+# Copy to .dev.vars for `wrangler pages dev`; never commit real values.
+ACCESS_TEAM_DOMAIN="https://your-team.cloudflareaccess.com"
+ACCESS_AUD="replace-with-pages-application-aud"
+OWNER_EMAIL="zongrui0831@outlook.com"
+ACCESS_ALLOWED_IDP_IDS="github-idp-uuid,google-idp-uuid"
+PUBLIC_ORIGIN="https://translate.localhost"
+SHIORI_ORIGIN="https://translate-origin.zongtech.xyz"
+CF_ACCESS_CLIENT_ID="replace-with-service-token-client-id"
+CF_ACCESS_CLIENT_SECRET="replace-with-service-token-secret"
+CSRF_SHARED_SECRET="replace-with-at-least-32-random-bytes"
+# Development/preview Functions intentionally return PREVIEW_ORIGIN_DISABLED;
+# production-only origin credentials must be configured as encrypted Pages secrets.
+SHIORI_ENVIRONMENT="development"

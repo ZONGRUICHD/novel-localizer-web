@@ -1,0 +1,9 @@
+# This file documents the only allowed ingress. For token-managed production
+# tunnels, configure the equivalent route in Cloudflare Zero Trust instead.
+ingress:
+  - hostname: translate-origin.zongtech.xyz
+    service: http://127.0.0.1:18740
+    originRequest:
+      connectTimeout: 10s
+      keepAliveTimeout: 90s
+  - service: http_status:404
