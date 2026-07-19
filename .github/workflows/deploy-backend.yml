@@ -38,7 +38,7 @@ jobs:
       - run: uv build --wheel --out-dir ../release
         working-directory: backend
       - run: tar --exclude=.git --exclude=frontend --exclude='*.epub' --exclude='*.pdf' -czf release/shiori-source.tar.gz backend deploy
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: shiori-backend-${{ steps.revision.outputs.sha }}
           path: release/
