@@ -87,14 +87,14 @@ $branchProtection = @{
     required_signatures               = $false
 } | ConvertTo-Json -Depth 8
 
-if ($PSCmdlet.ShouldProcess($Repository, "configure private repository settings")) {
+if ($PSCmdlet.ShouldProcess($Repository, "configure repository settings")) {
     Invoke-GitHubJsonRequest $repoSettings "configuring repository settings" @(
         "--method", "PATCH", "repos/$Repository"
     )
-    $isPrivate = gh api "repos/$Repository" --jq .private
-    Assert-GitHubCliSuccess "checking repository visibility"
-    if ($isPrivate -ne "true") {
-        throw "Refusing to configure a repository that is not private."
+    $resolvedRepository = gh api "repos/$Repository" --jq .full_name
+    Assert-GitHubCliSuccess "checking repository identity"
+    if ($resolvedRepository -ne $Repository) {
+        throw "GitHub resolved an unexpected repository: $resolvedRepository"
     }
 }
 
