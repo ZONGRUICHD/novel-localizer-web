@@ -111,9 +111,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
       - uses: astral-sh/setup-uv@v6
-      - run: uv export --directory backend --locked --no-dev --format requirements-txt --output-file "$RUNNER_TEMP/shiori-requirements.txt"
-      - run: uvx pip-audit -r "$RUNNER_TEMP/shiori-requirements.txt"
+      - run: uv export --directory backend --locked --no-dev --format requirements-txt --no-emit-project --output-file "$RUNNER_TEMP/shiori-requirements.txt"
+      - run: uvx --python 3.12 pip-audit -r "$RUNNER_TEMP/shiori-requirements.txt"
       - uses: pnpm/action-setup@v4
         with:
           version: 10
